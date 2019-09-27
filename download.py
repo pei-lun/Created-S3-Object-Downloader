@@ -30,7 +30,11 @@ def download(sqs_queue_url, destination, reserved_prefixes):
     s3_client = boto3.client('s3')
 
     for msg in receive_sqs_msgs(sqs_queue_url):
-        event: dict = json.loads(msg.body)['Records'][0]
+        try:
+            event: dict = json.loads(msg.body)['Records'][0]
+        except KeyError:
+            continue
+
         event_src: str = event['eventSource']
         event_name: str = event['eventName']
 
