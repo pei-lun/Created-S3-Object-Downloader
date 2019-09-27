@@ -10,7 +10,7 @@ def receive_sqs_msgs(sqs_queue_url: str):
     sqs = boto3.resource('sqs')
     sqs_queue = sqs.Queue(sqs_queue_url)
 
-    msgs = sqs_queue.receive_messages()
+    msgs = sqs_queue.receive_messages(VisibilityTimeout=180)
     while msgs:
         for msg in msgs:
             yield msg
