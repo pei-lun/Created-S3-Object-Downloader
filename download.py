@@ -30,11 +30,19 @@ def download(sqs_queue_url, destination, reserved_prefixes):
     s3_client = boto3.client('s3')
 
     for msg in receive_sqs_msgs(sqs_queue_url):
-        try:
-            event: dict = json.loads(msg.body)['Records'][0]
-        except KeyError:
+        msg_content = json.loads(msg.body)
+        if 'Records' in msg_content:
+            records = msg_content['Records']
+        elif msg_content.get('Subject') == 'Amazon S3 Notification':
+            s3_event_msg = json.loads(msg_content['Message'])
+            if 'Records' in s3_event_msg:
+                records = s3_event_msg['Records']
+            else:
+                continue
+        else:
             continue
 
+        event: dict = records[0]
         event_src: str = event['eventSource']
         event_name: str = event['eventName']
 
