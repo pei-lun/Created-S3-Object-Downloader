@@ -33,10 +33,16 @@ def download(sqs_queue_url, destination, reserved_prefixes):
         msg_content = json.loads(msg.body)
         if 'Records' in msg_content:
             records = msg_content['Records']
+        elif msg_content.get('Event') == 's3:TestEvent':
+            msg.delete()
+            continue
         elif msg_content.get('Subject') == 'Amazon S3 Notification':
             s3_event_msg = json.loads(msg_content['Message'])
             if 'Records' in s3_event_msg:
                 records = s3_event_msg['Records']
+            elif s3_event_msg.get('Event') == 's3:TestEvent':
+                msg.delete()
+                continue
             else:
                 continue
         else:
