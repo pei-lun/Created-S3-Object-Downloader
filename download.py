@@ -1,6 +1,7 @@
 import json
 from os import makedirs
 from os.path import dirname, isdir, join
+from urllib.parse import unquote_plus
 
 import boto3
 import click
@@ -53,7 +54,7 @@ def download(sqs_queue_url, destination, reserved_prefixes):
         event_name: str = event['eventName']
         if event_src == 'aws:s3' and event_name.startswith('ObjectCreated'):
             bucket_name: str = event['s3']['bucket']['name']
-            object_key: str = event['s3']['object']['key']
+            object_key: str = unquote_plus(event['s3']['object']['key'])
 
             filename = join(
                 destination, *object_key.split('/')[-1 - reserved_prefixes :]
