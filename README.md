@@ -6,7 +6,7 @@ This CLI tool polls SQS queue for new object created events published by S3, and
 
 ### AWS Managed Policy
 
-- AmazonS3ReadOnlyAccess 
+- AmazonS3ReadOnlyAccess
 
 ### Inline Policies
 
