@@ -19,13 +19,16 @@ def receive_sqs_msgs(sqs_queue_url: str):
 
 
 @click.command()
+@click.option('--bucket')
+@click.option('--prefix')
+@click.option('--suffix')
 @click.option('--reserved-prefixes', default=0, type=int)
 @click.argument('sqs_queue_url')
 @click.argument(
     'destination',
     type=click.Path(exists=True, file_okay=False, writable=True, resolve_path=True),
 )
-def download(sqs_queue_url, destination, reserved_prefixes):
+def download(sqs_queue_url, destination, bucket, prefix, suffix, reserved_prefixes):
     s3_client = boto3.client('s3')
 
     for msg in receive_sqs_msgs(sqs_queue_url):
@@ -53,6 +56,13 @@ def download(sqs_queue_url, destination, reserved_prefixes):
         if event_src == 'aws:s3' and event_name.startswith('ObjectCreated'):
             bucket_name: str = event['s3']['bucket']['name']
             object_key: str = unquote_plus(event['s3']['object']['key'])
+
+            if bucket and (bucket != bucket_name):
+                continue
+            if prefix and (not object_key.startswith(prefix)):
+                continue
+            if suffix and (not object_key.endswith(suffix)):
+                continue
 
             filename = join(
                 destination, *object_key.split('/')[-1 - reserved_prefixes :]
