@@ -23,9 +23,7 @@ def receive_sqs_msgs(sqs_queue_url: str):
 @click.argument('sqs_queue_url')
 @click.argument(
     'destination',
-    type=click.Path(
-        exists=True, file_okay=False, writable=True, resolve_path=True
-    ),
+    type=click.Path(exists=True, file_okay=False, writable=True, resolve_path=True),
 )
 def download(sqs_queue_url, destination, reserved_prefixes):
     s3_client = boto3.client('s3')
