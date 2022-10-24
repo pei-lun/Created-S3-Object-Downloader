@@ -32,49 +32,44 @@ def download(sqs_queue_url, destination, bucket, prefix, suffix, reserved_prefix
     s3_client = boto3.client('s3')
 
     for msg in receive_sqs_msgs(sqs_queue_url):
-        msg_content = json.loads(msg.body)
-        if 'Records' in msg_content:
-            records = msg_content['Records']
-        elif msg_content.get('Event') == 's3:TestEvent':
+        msg_body = json.loads(msg.body)
+        if msg_body.get('Subject') == 'Amazon S3 Notification':
+            event_msg = json.loads(msg_body['Message'])
+        else:
+            event_msg = msg_body
+
+        if 'Records' in event_msg:
+            records = event_msg['Records']
+        elif event_msg.get('Event') == 's3:TestEvent':
             msg.delete()
             continue
-        elif msg_content.get('Subject') == 'Amazon S3 Notification':
-            s3_event_msg = json.loads(msg_content['Message'])
-            if 'Records' in s3_event_msg:
-                records = s3_event_msg['Records']
-            elif s3_event_msg.get('Event') == 's3:TestEvent':
-                msg.delete()
-                continue
-            else:
-                continue
         else:
             continue
 
         event: dict = records[0]
         event_src: str = event['eventSource']
         event_name: str = event['eventName']
-        if event_src == 'aws:s3' and event_name.startswith('ObjectCreated'):
-            bucket_name: str = event['s3']['bucket']['name']
-            object_key: str = unquote_plus(event['s3']['object']['key'])
+        if not (event_src == 'aws:s3' and event_name.startswith('ObjectCreated')):
+            continue
 
-            if bucket and (bucket != bucket_name):
-                continue
-            if prefix and (not object_key.startswith(prefix)):
-                continue
-            if suffix and (not object_key.endswith(suffix)):
-                continue
+        bucket_name: str = event['s3']['bucket']['name']
+        object_key: str = unquote_plus(event['s3']['object']['key'])
 
-            filename = join(
-                destination, *object_key.split('/')[-1 - reserved_prefixes :]
-            )
+        if bucket and (bucket != bucket_name):
+            continue
+        if prefix and (not object_key.startswith(prefix)):
+            continue
+        if suffix and (not object_key.endswith(suffix)):
+            continue
 
-            directory = dirname(filename)
-            if not isdir(directory):
-                makedirs(directory)
+        filename = join(destination, *object_key.split('/')[-1 - reserved_prefixes :])
 
-            s3_client.download_file(bucket_name, object_key, filename)
+        directory = dirname(filename)
+        if not isdir(directory):
+            makedirs(directory)
 
-            msg.delete()
+        s3_client.download_file(bucket_name, object_key, filename)
+        msg.delete()
 
 
 if __name__ == '__main__':
