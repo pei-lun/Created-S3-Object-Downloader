@@ -1,21 +1,26 @@
 import json
 from os import makedirs
 from os.path import dirname, isdir, join
+from typing import Optional
 from urllib.parse import unquote_plus
 
 import boto3
 import click
 
 
-def receive_sqs_msgs(sqs_queue_url: str):
+def receive_sqs_msgs(sqs_queue_url: str, visibility_timeout: Optional[int] = None):
     sqs = boto3.resource('sqs')
     sqs_queue = sqs.Queue(sqs_queue_url)
 
-    msgs = sqs_queue.receive_messages(VisibilityTimeout=180)
+    kwargs = {'MaxNumberOfMessages': 10}
+    if visibility_timeout is not None:
+        kwargs['VisibilityTimeout'] = visibility_timeout
+
+    msgs = sqs_queue.receive_messages(**kwargs)
     while msgs:
         for msg in msgs:
             yield msg
-        msgs = sqs_queue.receive_messages()
+        msgs = sqs_queue.receive_messages(**kwargs)
 
 
 @click.command()
