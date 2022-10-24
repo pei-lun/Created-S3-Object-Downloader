@@ -2,7 +2,7 @@
 
 This CLI tool polls SQS queue for new object created events published by S3, and then it downloads objects to specified path.
 
-## Policies
+## Required Policies
 
 ### AWS Managed Policy
 
@@ -12,16 +12,16 @@ This CLI tool polls SQS queue for new object created events published by S3, and
 
 ```json
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "sqs:DeleteMessage",
-                "sqs:ReceiveMessage"
-            ],
-            "Resource": "arn:aws:sqs:REGION:ACCOUNT-ID:QUEUE-NAME"
-        }
-    ]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sqs:DeleteMessage",
+        "sqs:ReceiveMessage"
+      ],
+      "Resource": "arn:aws:sqs:REGION:ACCOUNT-ID:QUEUE-NAME"
+    }
+  ]
 }
 ```
